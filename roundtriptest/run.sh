@@ -1,19 +1,20 @@
 #!/bin/bash
 
-set -e
+set -e #遇到错误信息立刻退出
 
-BASEDIR=`dirname "$0"`
+BASEDIR=`dirname "$0"`  #dirname用于获取某文件的目录，$0表示脚本文件
+#此处作用在于获取脚本文件运行的根目录
 
 #make -C "$BASEDIR/.."
-pushd "$BASEDIR/.."
+pushd "$BASEDIR/.." #将目录入栈，并临时切换到指定目录
 ./piedpiper_make
-popd
+popd                #目录出栈并切回原目录
 
-if [ "$#" -ge 1 ]
+if [ "$#" -ge 1 ]   # "$#"表示接受到的参数个数，-ge 1表示>=1
 then
     FILES=()
-    for f in "$@"; do
-        FILES+=("$f")
+    for f in "$@"; do   # "%@"表示所有参数
+        FILES+=("$f")   # 将所有参数添加到FILES数组中
     done
 else
     FILES=($BASEDIR/tibby.264 $BASEDIR/black.264 $BASEDIR/../res/BAMQ2_JVC_C.264 $BASEDIR/../res/BA1_FT_C.264 $BASEDIR/walk.264)
