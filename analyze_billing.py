@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+#用于指定python解释器，此处为Ubuntu自带的解释器
 import argparse
 
 _cmdline_desc = """\
