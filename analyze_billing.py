@@ -10,12 +10,12 @@ Then pass output as an argument to this script.
 """
 
 _cmdline_parser = argparse.ArgumentParser(
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-    description='Analyze output of h264dec')
+    formatter_class=argparse.RawDescriptionHelpFormatter,   #保留帮助信息的空白和缩进
+    description='Analyze output of h264dec')                #--help中显示的帮助信息
 _cmdline_parser.add_argument(
     '-v',
     '--verbose',
-    action='store_true',
+    action='store_true',                                    #出现v的时候将该参数(v)设为True
     help='Print debugging statements.',
 )
 _cmdline_parser.add_argument(
@@ -24,26 +24,46 @@ _cmdline_parser.add_argument(
     help='Path to stdout file capture of h264dec.',
 )
 
-from collections import OrderedDict
-import re
+
+from collections import OrderedDict #collection提供了一些容器类型，包括defaultdict和OrderDict
+# 具体来讲，OrderedDict 是一种有序字典，它保留了添加键的顺序，这使得 OrderedDict 更适合于需要维护元素插入顺序的场景，而不是键自然排序的场景。
+# 与普通的字典不同，它的键值对的顺序是按照添加顺序来维护的。
+
+import re               #用于正则表达式匹配
+#re.compile
 feature_bill_re = re.compile(r'^(?P<index>\d*)\s*::\s*(?P<bytes>\d+(.\d+)?)\s*\[(?P<label>.*)\]')
+# 匹配诸如    123 :: 45.67 [label]  的结果，123表示整数存入idex，45.67表示浮点数存入bytes，label表示一个字符串
+# 具体如下
+# ?P<xxx>用于制定一个名为xxx的捕获组，以此通过名称引用捕获组，而不是组号
+# \d 表示一个数字，\s表示一个空白字符
+# . 表示匹配除换行字符外的任意字符
+# * 表示匹配前面的元素0+次(包括0)，+表示匹配1+，？表示0或1
+# ^                  # 匹配行的开头
+# (?P<index>\d*)     # 匹配零个或多个数字，保存在名为index的分组中
+# \s*::\s*           # 匹配两个冒号及其周围的任意空白字符
+# (?P<bytes>\d+(.\d+)?) # 匹配一个或多个数字，可能包含一个小数点和更多数字，保存在名为bytes的分组中
+# \s*\[              # 匹配任意空白字符和一个左中括号
+# (?P<label>.*)\]    # 匹配一个或多个任意字符，保存在名为label的分组中，直到遇到右中括号为止
+
+
 
 HEADER = ('Feature', 'Bench', 'Ours', 'O-B', 'O/B')
 
-header_row_format = '{:>22} {:>10} {:>10} {:>10} {:>10}%'
-feature_row_format = '{:>22} {:>10,} {:>10,} {:>10,} {:>10}%'
+header_row_format = '{:>22} {:>10} {:>10} {:>10} {:>10}%'   #{:>22}表示22位宽右对齐字符串，{:>10}表示10位宽右对齐字符串
+#   {:>10}%表示10位宽右对齐字符串，用%结尾
+feature_row_format = '{:>22} {:>10,} {:>10,} {:>10,} {:>10}%'   #{:>10,}表示10位宽右对齐字符串并用，做千位分隔符
 
 class VideoCompressionResult(object):
     def __init__(self, name):
         self.name = name
-        self.ours = OrderedDict()
-        self.benchmark = OrderedDict()
-    def __repr__(self):
-        return 'VideoCompressionResult(%r)' % self.name
+        self.ours = OrderedDict()       #字典，且按键的插入顺序进行迭代
+        self.benchmark = OrderedDict()  #字典，且按键的插入顺序进行迭代
+    def __repr__(self):                 #返回对象的表示形式，在print的时候返回名称而非地址
+        return 'VideoCompressionResult(%r)' % self.name # %r表示self.name的字符串表示形式
 
 def parse_outputs(output_path):
     video_files = []
-    video_result = VideoCompressionResult('video file')
+    video_result = VideoCompressionResult('video file') #实例化一个name属性为video file的VideoCompressionResult对象
     video_results = [video_result]
     with open(output_path, 'r') as output_file:
         for line in output_file:
