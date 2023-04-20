@@ -68,17 +68,19 @@ def parse_outputs(output_path):
     with open(output_path, 'r') as output_file:
         for line in output_file:
             if line.startswith('==='):
-                video_name = line.strip(' =\n')
-                video_files.append(video_name)
-                video_result = VideoCompressionResult(video_name)
-                video_results.append(video_result)
+                video_name = line.strip(' =\n')     #将===开头的内容，去除收尾的 = 和 空格，剩余部分作为video name
+                video_files.append(video_name)      #将video name作为字符接入video_files列表
+                video_result = VideoCompressionResult(video_name)   #用video name创建一个VideoCompressionResult实例
+                video_results.append(video_result)  #将video name 的实例 接入video_results列表
                 continue
-            m = feature_bill_re.match(line.strip())
-            if m:
-                label = m.groupdict()['label']
-                if '.' in m.groupdict()['bytes']:
-                    video_result.benchmark[label] = int(float(m.groupdict()['bytes']))
+            m = feature_bill_re.match(line.strip())     # m表示正则表达式匹配，匹配成功则返回对象，否则是None
+            if m:       
+                label = m.groupdict()['label']          # 返回所有键为label的键值对
+                if '.' in m.groupdict()['bytes']:       # 检查捕获到的bytes的键值对中的 键 是否包含小数点
+                    #将浮点数字符串转为整数，并作为键值，label作为键，存入benchmark字典
+                    video_result.benchmark[label] = int(float(m.groupdict()['bytes']))  
                 else:
+                    #将整数字符串转为整数，  并作为键值，label作为键，存入ours字典
                     video_result.ours[label] = int(m.groupdict()['bytes'])
                 continue
     return [video_result for video_result in video_results
