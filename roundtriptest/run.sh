@@ -17,7 +17,8 @@ then
         FILES+=("$f")   # 将所有参数添加到FILES数组中
     done
 else
-    FILES=($BASEDIR/tibby.264 $BASEDIR/black.264 $BASEDIR/../res/BAMQ2_JVC_C.264 $BASEDIR/../res/BA1_FT_C.264 $BASEDIR/walk.264)
+    FILES=($BASEDIR/tibby.264)
+    #FILES=($BASEDIR/tibby.264 $BASEDIR/black.264 $BASEDIR/../res/BAMQ2_JVC_C.264 $BASEDIR/../res/BA1_FT_C.264 $BASEDIR/walk.264)
     # tibby.264等文件为源文件
 fi  # 表示endif
 
@@ -38,7 +39,7 @@ for f in ${FILES[@]}; do
     python analyze_billing.py $bill #analyze——billing.py的作用：
     
     cat $bill >> $REPORT    #将%bill的内容显示在cmd中，并且存入report
-    rm $bill                #删除bill的内容
+    #rm $bill                #删除bill的内容
     echo "    ./h264dec /tmp/a.pip /tmp/a.264"
     ./h264dec /tmp/a.pip /tmp/a.264
     diff /tmp/a.264 "$f"    #比较两个文件的区别，并在cmd中显示
