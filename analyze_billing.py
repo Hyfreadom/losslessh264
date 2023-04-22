@@ -88,7 +88,7 @@ def parse_outputs(output_path):
     return [video_result for video_result in video_results      #返回值为一个含有VideoCompressionResult对象的列表
             if video_result.ours or video_result.benchmark]
 
-def perc(num, denom):           #计算num/denom的百分比
+def perc(num, denom):       #计算 num/denom 的百分比
     if denom == 0:
         return float('inf')
     else:
