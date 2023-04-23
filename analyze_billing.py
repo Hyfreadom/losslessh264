@@ -100,10 +100,10 @@ def analyze(output_path):
     video_results = parse_outputs(output_path)          
     for video_result in video_results:
         print 'Analysis of %s' % video_result.name
-        print '\t' + header_row_format.format(*HEADER)  #打印的表头如下所示
+        print '\t' + header_row_format.format(*HEADER)  
+#打印的表头如下所示
 #Analysis of xxxx
 #                     Feature      Bench       Ours        O-B        O/B%
-
         # Combine the label lists preserving order.
         ours_labels = {k:i for i, k in enumerate(video_result.ours.keys())}
         benchmark_labels = {k:i for i, k in enumerate(video_result.benchmark.keys())}
@@ -130,6 +130,46 @@ def analyze(output_path):
 
         print ''
     return video_results
+'''打印的表格示例
+Analysis of video file
+	               Feature      Bench       Ours        O-B        O/B%
+	           boilerplate        259        847        588        327%
+	                  skip      3,506      3,033       -473         87%
+	              skip end          0        253        253        inf%
+	                  cbpl      9,300      7,871     -1,429         85%
+	                   qpl      1,612        352     -1,260         22%
+	               mb type      4,622      3,714       -908         80%
+	                   ref          0        103        103        inf%
+	              pred 8x8        183      1,290      1,107        705%
+	            pred 16x16      4,579        408     -4,171          9%
+	             pred mode      6,171      9,411      3,240        153%
+	                sub mb        333         30       -303          9%
+	                 mv[0]     11,512     10,688       -824         93%
+	                 mv[1]     10,976     10,239       -737         93%
+	               luma dc      2,737        666     -2,071         24%
+	             chroma dc      1,999      1,678       -321         84%
+	            luma 0 eob     45,747     22,208    -23,539         49%
+	        luma 0 bitmask      2,012      6,347      4,335        315%
+	       luma 0 exponent          0          7          7        inf%
+	    luma 0 significand      1,563      4,304      2,741        275%
+	           luma 0 sign      4,940      4,351       -589         88%
+	      luma Nth bitmask      3,417     13,469     10,052        394%
+	     luma Nth exponent          0          2          2        inf%
+	  luma Nth significand      1,006      3,774      2,768        375%
+	         luma Nth sign      6,908      6,678       -230         97%
+	            chroma eob         64         48        -16         75%
+	        chroma bitmask          0         13         13        inf%
+	            chroma exp          0          1          1        inf%
+	    chroma significand          0          7          7        inf%
+	           chroma sign         11         12          1        109%
+	              pad byte          0         34         34        inf%
+	           luma total:     68,330     61,806     -6,524         90%
+	         chroma total:      2,074      1,759       -315         85%
+	           pred total:     10,933     11,109        176        102%
+	                total:    123,457    111,838    -11,619         91%
+
+'''
+
 
 def main():
     parsed_args = _cmdline_parser.parse_args()
