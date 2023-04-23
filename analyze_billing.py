@@ -19,7 +19,7 @@ _cmdline_parser.add_argument(
     help='Print debugging statements.',
 )
 _cmdline_parser.add_argument(
-    'output_path',
+    'output_path',                                          #output_path = $bill，bill是一个log数据，与report内容一致
     type=str,
     help='Path to stdout file capture of h264dec.',
 )
@@ -36,8 +36,10 @@ feature_bill_re = re.compile(r'^(?P<index>\d*)\s*::\s*(?P<bytes>\d+(.\d+)?)\s*\[
 # 具体如下
 # ?P<xxx>用于制定一个名为xxx的捕获组，以此通过名称引用捕获组，而不是组号
 # \d 表示一个数字，\s表示一个空白字符
-# . 表示匹配除换行字符外的任意字符
-# * 表示匹配前面的元素0+次(包括0)，+表示匹配1+，？表示0或1
+# .                     # 匹配除换行字符外的任意字符
+# *                     # 匹配前面的元素任意次
+# +                     # 匹配前面的元素1次或多次
+# ？                    # 匹配前面的元素0词或1词
 # ^                     # 匹配行的开头
 # (?P<index>\d*)        # 匹配零个或多个数字，保存在名为index的分组中
 # \s*::\s*              # 匹配两个冒号及其周围的任意空白字符
@@ -68,15 +70,15 @@ def parse_outputs(output_path):
     video_result = VideoCompressionResult('video file') #实例化一个name属性为video file的VideoCompressionResult对象
     video_results = [video_result]
     with open(output_path, 'r') as output_file:
-        for line in output_file:
-            if line.startswith('==='):
-                video_name = line.strip(' =\n')         #将===开头的内容，去除收尾的 = 和 空格，剩余部分作为video name
+        for line in output_file:                        #output_file 为 bill（report）文档
+            if line.startswith('==='):                  #判断是否为==开头（==开头说明是分割行，包含表头信息）
+                video_name = line.strip(' =\n')         #提取表头中的名称信息(去除=和空格)，作为video name
                 video_files.append(video_name)          #将video name作为字符接入video_files列表
                 video_result = VideoCompressionResult(video_name)   #用video name创建一个VideoCompressionResult实例
-                video_results.append(video_result)      #将video name 的实例 接入video_results列表
+                video_results.append(video_result)      #将video name 的实例接入video_results列表
                 continue
             m = feature_bill_re.match(line.strip())     # m表示正则表达式匹配，匹配成功则返回对象，否则是None
-            if m:       
+            if m:                                       # 判断是否是压缩信息
                 label = m.groupdict()['label']          # 返回所有键为label的键值对
                 if '.' in m.groupdict()['bytes']:       # 检查捕获到的bytes的键值对中的 键 是否包含小数点
                     #将包含小数点的键值中的浮点数字符串转为整数，并作为键值，label作为键，存入benchmark字典
