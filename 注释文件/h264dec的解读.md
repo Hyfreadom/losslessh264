@@ -78,7 +78,6 @@ version1:
 这个函数的主要任务是读取 H.264 格式的视频文件，然后使用 `ISVCDecoder` 接口进行解码，并将解码后的数据写入 YUV 格式的输出文件。在这个过程中，还可以通过可选文件和长度文件来进行额外的配置。
 
 
-
 version2：
 这段代码定义了一个名为`H264DecodeInstance`的函数，它负责解码H.264视频文件并将解码后的数据写入一个YUV文件。该函数接收一系列参数，包括解码器对象、输入文件名、输出文件名等，然后逐帧解码输入文件并将结果写入输出文件。
 
@@ -110,3 +109,71 @@ version2：
 9. 清理资源，关闭文件指针，并调用`foc.nop()`。
 
 该函数的主要作用是使用给定的解码器对象逐帧解码H.264文件，并将解码后的数据写入指定的YUV文件。在解码过程中，会输出一些统计信息，如宽度、高度、帧数、解码时间等。最后，函数会自动释放所占用的资源。
+
+================================================================================================================================
+
+int32_t main (int32_t iArgC, char* pArgV[]):
+
+version1:
+This code is a C++ program that uses the OpenH264 library to decode H.264 video files. The main function takes in command line arguments to specify the input file, output file, and additional settings, and then decodes the H.264 video accordingly. Here's a brief explanation of the code:
+
+1. The `main` function is defined, taking in command line arguments `iArgC` and `pArgV[]`.
+
+2. It creates an `ISVCDecoder` pointer named `pDecoder` and initializes a `SDecodingParam` structure named `sDecParam`.
+
+3. The program checks the number of command line arguments and processes them accordingly. Depending on the number of arguments, it determines the input file, output file, and other settings from either a configuration file or directly from the command line arguments.
+
+4. The decoder is created using `WelsCreateDecoder`, and the trace level is set using `SetOption` if needed.
+
+5. The decoder is initialized with the `Initialize` function, passing in the `sDecParam` structure.
+
+6. The `H264DecodeInstance` function is called, which decodes the H.264 video and writes the output to the specified file.
+
+7. The program performs cleanup, freeing memory and uninitializing the decoder.
+
+8. The program exits with a return code of 0, indicating successful execution.
+
+The code can be compiled and linked with the OpenH264 library to create a command line utility that decodes H.264 video files. Note that the code may contain some unsafe string manipulation functions (like `strncpy`), which can be replaced with safer alternatives (such as `strncpy_s`) to prevent potential buffer overflow issues.
+
+
+version2:
+
+This is a C++ program that appears to be a command-line H.264 video decoder. It uses the provided OpenH264 library (by Cisco) to decode H.264 video files. The program can be run in different modes, specified by the input arguments. It accepts input files in various formats, such as a .cfg (configuration) file or a .264 file, and can output a YUV video file.
+
+The program starts by defining the `main` function, with some preprocessor directives to handle different platforms. Then, it initializes variables for the input file, output file, option file, and length file, as well as other variables required for the decoding process. It then checks the input arguments and assigns values to the appropriate variables based on the provided arguments.
+
+Next, the program reads the configuration file (if provided), which contains settings for the decoder. If a configuration file is not provided, it uses default values for some settings.
+
+After that, it creates a decoder instance and initializes it with the parameters provided in the configuration file or from the command-line arguments. Then it calls the `H264DecodeInstance` function, which decodes the input H.264 video file and outputs the decoded YUV video file.
+
+Finally, the program cleans up allocated memory and destroys the decoder instance before exiting.
+
+====================================================================================================================================================
+
+int32_t 什么意思：
+
+`int32_t main (int32_t iArgC, char* pArgV[])` 是 C 语言程序的主函数，其中 `int32_t` 是一个整数类型，代表 32 位有符号整数。在这里，它用于表示 `main` 函数的返回值类型。通常情况下，`main` 函数返回值为 0 表示程序正常退出，其他值则表示程序异常退出。
+
+`iArgC` 和 `pArgV[]` 是 `main` 函数的参数，分别表示命令行参数的数量和内容。`iArgC` 是一个整数，表示命令行参数的数量，包括程序名称本身。`pArgV[]` 是一个指向指针的指针，其中每个指针都指向一个命令行参数的字符串。通常情况下，`pArgV[0]` 是程序名称，`pArgV[1]`、`pArgV[2]`、……、`pArgV[iArgC-1]` 是其他的命令行参数。
+
+`int32_t` 是 C 语言标准库中定义的整数类型之一，通常表示一个 32 位有符号整数。由于不同的平台对整数类型的长度可能有所不同，使用 `int32_t` 类型可以保证代码在不同平台上的可移植性。
+
+=================================================================================================================================================
+复制完整代码后的解读：
+The code you provided is a C++ implementation of an H.264 video decoder. It decodes a video bitstream in the H.264 format and writes the decoded frames into a YUV file, which is a file that stores raw video data without compression.
+
+The code has several key components:
+1. `H264DecodeInstance`: This function takes an H.264 bitstream file as input, decodes it using the OpenH264 decoder (ISVCDecoder), and writes the decoded frames to a YUV file. It also supports optional file output for writing additional information such as video dimensions and frame numbers.
+2. `MultiFileWriter`: This class is a custom implementation of the `CompressedWriter` interface that writes the compressed data to multiple output files, depending on the stream ID.
+3. `FlushOnClose`: This class is a utility class that flushes the data to the output file when the object goes out of scope.
+4. The main function (`DecMain` or `main` depending on the platform): It parses the command-line arguments, initializes the OpenH264 decoder (ISVCDecoder), and calls the `H264DecodeInstance` function to perform the decoding.
+
+Overall, this code is designed to be a command-line application that takes an H.264 bitstream file as input, decodes it, and writes the output to a YUV file.
+
+
+This program appears to be a command-line H.264 video decoder. The provided code snippet reads an H.264 video bitstream from a file, decodes it, and then writes the decoded frames to another file. It can handle different input and output options depending on the provided arguments, such as the input bitstream file, output YUV file, and additional options. 
+
+The decoder uses the OpenH264 library, which provides a standard API for H.264 decoding tasks. The code also contains additional functionality to handle optional files, logging, and various decoder options.
+
+In summary, this program decodes an H.264 video bitstream and writes the resulting frames to an output file, which can be later used for further processing or playback.
+
