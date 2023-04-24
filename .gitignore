@@ -54,3 +54,4 @@ testbin/test.yuv
 
 # CLion IDE
 /.idea
+.DS_Store
