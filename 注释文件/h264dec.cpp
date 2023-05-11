@@ -1,14 +1,48 @@
+/*!
+ * \copy
+ *     Copyright (c)  2004-2013, Cisco Systems
+ *     All rights reserved.
+ *
+ *     Redistribution and use in source and binary forms, with or without
+ *     modification, are permitted provided that the following conditions
+ *     are met:
+ *
+ *        * Redistributions of source code must retain the above copyright
+ *          notice, this list of conditions and the following disclaimer.
+ *
+ *        * Redistributions in binary form must reproduce the above copyright
+ *          notice, this list of conditions and the following disclaimer in
+ *          the documentation and/or other materials provided with the
+ *          distribution.
+ *
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *     "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *     LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *     FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *     COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *     INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *     BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *     CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *     POSSIBILITY OF SUCH DAMAGE.
+ *
+ * h264dec.cpp:         Wels Decoder Console Implementation file
+ */
+
 #if defined (_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <tchar.h>
 #else
+#include <string.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #if defined (ANDROID_NDK)
-
+#include <android/log.h>
 #endif
 #include "codec_def.h"
 #include "codec_app_def.h"
@@ -26,7 +60,18 @@
 using namespace std;
 extern void test_arithmetic_coding();
 
+#if defined (WINDOWS_PHONE)
+double g_dDecTime = 0.0;
+float  g_fDecFPS = 0.0;
+int    g_iDecodedFrameNum = 0;
+#endif
 
+#if defined(ANDROID_NDK)
+#define LOG_TAG "welsdec"
+#define LOGI(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#define printf LOGI
+#define fprintf(a, ...) LOGI(__VA_ARGS__)
+#endif
 //using namespace WelsDec;
 
 //#define NO_DELAY_DECODING	// For Demo interfaces test with no delay decoding
@@ -261,21 +306,59 @@ void H264DecodeInstance (ISVCDecoder* pDecoder, const char* kpH264FileName, cons
     if (sDstBufInfo.iBufferStatus == 1) {
       pDst[0] = pData[0];
       pDst[1] = pData[1];
-      pDst[2] = pData[2];}
+      pDst[2] = pData[2];
+    }
     iEnd    = WelsTime();
     iTotal += iEnd - iStart;
     if (sDstBufInfo.iBufferStatus == 1) {
       cOutputModule.Process ((void**)pDst, &sDstBufInfo, pYuvFile);
       iWidth  = sDstBufInfo.UsrData.sSystemBuffer.iWidth;
       iHeight = sDstBufInfo.UsrData.sSystemBuffer.iHeight;
+
       if (pOptionFile != NULL) {
         if (iWidth != iLastWidth && iHeight != iLastHeight) {
           fwrite (&iFrameCount, sizeof (iFrameCount), 1, pOptionFile);
           fwrite (&iWidth , sizeof (iWidth) , 1, pOptionFile);
           fwrite (&iHeight, sizeof (iHeight), 1, pOptionFile);
           iLastWidth  = iWidth;
-          iLastHeight = iHeight;}}
-      ++ iFrameCount;}
+          iLastHeight = iHeight;
+        }
+      }
+      ++ iFrameCount;
+    }
+
+#ifdef NO_DELAY_DECODING
+    iStart = WelsTime();
+    pData[0] = NULL;
+    pData[1] = NULL;
+    pData[2] = NULL;
+    memset (&sDstBufInfo, 0, sizeof (SBufferInfo));
+    sDstBufInfo.uiInBsTimeStamp = uiTimeStamp;
+    pDecoder->DecodeFrame2 (NULL, 0, pData, &sDstBufInfo);
+    if (sDstBufInfo.iBufferStatus == 1) {
+      pDst[0] = pData[0];
+      pDst[1] = pData[1];
+      pDst[2] = pData[2];
+    }
+    iEnd    = WelsTime();
+    iTotal += iEnd - iStart;
+    if (sDstBufInfo.iBufferStatus == 1) {
+      cOutputModule.Process ((void**)pDst, &sDstBufInfo, pYuvFile);
+      iWidth  = sDstBufInfo.UsrData.sSystemBuffer.iWidth;
+      iHeight = sDstBufInfo.UsrData.sSystemBuffer.iHeight;
+
+      if (pOptionFile != NULL) {
+        if (iWidth != iLastWidth && iHeight != iLastHeight) {
+          fwrite (&iFrameCount, sizeof (iFrameCount), 1, pOptionFile);
+          fwrite (&iWidth , sizeof (iWidth) , 1, pOptionFile);
+          fwrite (&iHeight, sizeof (iHeight), 1, pOptionFile);
+          iLastWidth  = iWidth;
+          iLastHeight = iHeight;
+        }
+      }
+      ++ iFrameCount;
+    }
+#endif
     iBufPos += iSliceSize;
     ++ iSliceIndex;
   }
@@ -290,6 +373,12 @@ void H264DecodeInstance (ISVCDecoder* pDecoder, const char* kpH264FileName, cons
   fprintf (stderr, "iWidth:\t\t%d\nheight:\t\t%d\nFrames:\t\t%d\ndecode time:\t%f sec\nFPS:\t\t%f fps\n",
            iWidth, iHeight, iFrameCount, dElapsed, (iFrameCount * 1.0) / dElapsed);
   fprintf (stderr, "-------------------------------------------------------\n");
+
+#if defined (WINDOWS_PHONE)
+  g_dDecTime = dElapsed;
+  g_fDecFPS = (iFrameCount * 1.0f) / (float) dElapsed;
+  g_iDecodedFrameNum = iFrameCount;
+#endif
 
   // coverity scan uninitial
 label_exit:
@@ -311,13 +400,6 @@ label_exit:
   }
   foc.nop();
 }
-
-
-
-
-
-
-
 
 #if (defined(ANDROID_NDK)||defined(APPLE_IOS) || defined (WINDOWS_PHONE))
 int32_t DecMain (int32_t iArgC, char* pArgV[]) {
@@ -346,8 +428,13 @@ int32_t main (int32_t iArgC, char* pArgV[]) {
       string strTag[4];
       string strReconFile ("");
 
-      if (!cReadCfg.ExistFile()) {printf ("Specified file: %s not exist, maybe invalid path or parameter settting.\n", cReadCfg.GetFileName().c_str());return 1;}
-      while (!cReadCfg.EndOfFile()) {long nRd = cReadCfg.ReadLine (&strTag[0]);
+      if (!cReadCfg.ExistFile()) {
+        printf ("Specified file: %s not exist, maybe invalid path or parameter settting.\n", cReadCfg.GetFileName().c_str());
+        return 1;
+      }
+
+      while (!cReadCfg.EndOfFile()) {
+        long nRd = cReadCfg.ReadLine (&strTag[0]);
         if (nRd > 0) {
           if (strTag[0].compare ("InputFile") == 0) {
             strInputFile = strTag[1];
@@ -395,23 +482,65 @@ int32_t main (int32_t iArgC, char* pArgV[]) {
     sDecParam.eEcActiveIdc = ERROR_CON_SLICE_COPY;
     sDecParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_DEFAULT;
     if (iArgC > 3) {
-      yuvFile = pArgV[3];
-      if (iArgC > 4) {
-        for (int i = 3; i < iArgC; i++) {char* cmd = pArgV[i];
-          if (!strcmp (cmd, "-options")) {
-            if (i + 1 < iArgC)strOptionFile = pArgV[++i];
-            else {printf ("options file not specified.\n");return 1;}}
-          else if (!strcmp (cmd, "-trace")) {
-            if (i + 1 < iArgC)iLevelSetting = atoi (pArgV[++i]);
-            else {printf ("trace level not specified.\n");return 1;}} 
-          else if (!strcmp (cmd, "-length")) {
-            if (i + 1 < iArgC)strLengthFile = pArgV[++i];
-            else {printf ("lenght file not specified.\n");return 1;}}}}}
-    if (strOutputFile.empty()) {printf ("No output file specified in configuration file.\n");return 1;}}
-  if (strInputFile.empty()) {printf ("No input file specified in configuration file.\n");return 1;}
-  if (WelsCreateDecoder (&pDecoder)  || (NULL == pDecoder)) {printf ("Create Decoder failed.\n");return 1;}
-  if (iLevelSetting >= 0) {pDecoder->SetOption (DECODER_OPTION_TRACE_LEVEL, &iLevelSetting);}
-  if (pDecoder->Initialize (&sDecParam)) {printf ("Decoder initialization failed.\n");return 1;}
+        yuvFile = pArgV[3];
+        if (iArgC > 4) {
+            for (int i = 3; i < iArgC; i++) {
+                char* cmd = pArgV[i];
+                
+                if (!strcmp (cmd, "-options")) {
+                    if (i + 1 < iArgC)
+                        strOptionFile = pArgV[++i];
+                    else {
+                        printf ("options file not specified.\n");
+                        return 1;
+                    }
+                } else if (!strcmp (cmd, "-trace")) {
+                    if (i + 1 < iArgC)
+                        iLevelSetting = atoi (pArgV[++i]);
+                    else {
+                        printf ("trace level not specified.\n");
+                        return 1;
+                    }
+                } else if (!strcmp (cmd, "-length")) {
+                    if (i + 1 < iArgC)
+                        strLengthFile = pArgV[++i];
+                    else {
+                        printf ("lenght file not specified.\n");
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+
+    if (strOutputFile.empty()) {
+      printf ("No output file specified in configuration file.\n");
+      return 1;
+    }
+  }
+
+  if (strInputFile.empty()) {
+    printf ("No input file specified in configuration file.\n");
+    return 1;
+  }
+
+
+
+
+  if (WelsCreateDecoder (&pDecoder)  || (NULL == pDecoder)) {
+    printf ("Create Decoder failed.\n");
+    return 1;
+  }
+  if (iLevelSetting >= 0) {
+    pDecoder->SetOption (DECODER_OPTION_TRACE_LEVEL, &iLevelSetting);
+  }
+
+  if (pDecoder->Initialize (&sDecParam)) {
+    printf ("Decoder initialization failed.\n");
+    return 1;
+  }
+
+
   int32_t iWidth = 0;
   int32_t iHeight = 0;
 
