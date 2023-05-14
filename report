@@ -1,5 +1,5 @@
 ============== ./tibby.264 ================
-    ./h264dec ./tibby.264 /tmp/a.pip
+    
 ============== ./roundtriptest/tibby.264 ================
     ./h264dec ./roundtriptest/tibby.264 /tmp/a.pip
 H264 source file name: ./roundtriptest/tibby.264..
